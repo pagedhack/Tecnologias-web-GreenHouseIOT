@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicación HTML</title>
+    <style>
+        /* Estilos CSS para la tabla */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <h1>Parámetros</h1>
+    </nav>
+
+    <div class="container mt-5">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Temperatura</th>
+                    <th>Humedad</th>
+                    <th>Voltaje de radiación</th>
+                    <th>Valor de radiación</th>
+                    <th>Niveles de Agua</th>
+                </tr>
+            </thead>
+            <tbody id="characterData">
+                <!-- Los datos se cargarán dinámicamente aquí -->
+            </tbody>
+        </table>
+
+        <canvas id="temperatureChart"></canvas>
+        <canvas id="humidityChart"></canvas>
+        <canvas id="radiationVoltageChart"></canvas>
+        <canvas id="radiationValueChart"></canvas>
+        <canvas id="waterLevelsChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const inicialUrl = "http://127.0.0.1:8000/api/esp32";
+        const characterData = document.getElementById('characterData');
+
+        const fetchCharacters = (url) => {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let tableHTML = '';
+                    data.esps.forEach((item) => {
+                        tableHTML += `
+              <tr>
+                <td>${item.temperatura}</td>
+                <td>${item.humedad}</td>
+                <td>${item.voltajeradiacion}</td>
+                <td>${item.valorradiacion}</td>
+                <td>${item.agua}</td>
+              </tr>
+            `;
+                    });
+                    characterData.innerHTML = tableHTML;
+
+                    // Crear las gráficas
+                    const temperatures = data.esps.map(item => item.temperatura);
+                    const humidities = data.esps.map(item => item.humedad);
+                    const radiationVoltages = data.esps.map(item => item.voltajeradiacion);
+                    const radiationValues = data.esps.map(item => item.valorradiacion);
+                    const waterLevels = data.esps.map(item => item.agua);
+                    const labels = data.esps.map((item, index) => `Esp ${index + 1}`);
+
+                    createChart('temperatureChart', 'Temperaturas', temperatures, labels);
+                    createChart('humidityChart', 'Humedades', humidities, labels);
+                    createChart('radiationVoltageChart', 'Voltajes de Radiación', radiationVoltages, labels);
+                    createChart('radiationValueChart', 'Valores de Radiación', radiationValues, labels);
+                    createChart('waterLevelsChart', 'Niveles de Agua', waterLevels, labels);
+                })
+                .catch(error => console.log(error))
+        }
+
+        const createChart = (chartId, label, data, labels) => {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        fetchCharacters(inicialUrl);
+    </script>
+</body>
+
+</html>
